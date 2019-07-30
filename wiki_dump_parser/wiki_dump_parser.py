@@ -35,16 +35,9 @@ def xml_to_csv(filename):
   _current_tag = ''
   page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = factoids = ''
   def modify(data):
-      #soup = nltk.word_tokenize(data)
-      #values = ','.join(map(str, soup))
-      #soup = BeautifulSoup(data, "xml")
-      #soup = soup.get_text()
-      #return soup
-
-      #values = wtp.parse(data)
-      #values = ','.join(map(str, values))
-      #values = re.sub('=', '', data)
-      return data
+      translation_table = dict.fromkeys(map(ord, '=*\'-“”–'), None)
+      data_wtout_crt = data.translate(translation_table)
+      return data_wtout_crt
 
   def start_tag(tag, attrs):
     nonlocal output_csv, _current_tag, _parent
@@ -156,7 +149,7 @@ def xml_to_csv(filename):
   parser.EndElementHandler = end_tag
   parser.CharacterDataHandler = data_handler
   parser.buffer_text = True
-  parser.buffer_size = 1024
+  #parser.buffer_size = 2048
 
   # writing header for output csv file
   output_csv = open(filename[0:-3]+"csv",'w', encoding='utf8')
