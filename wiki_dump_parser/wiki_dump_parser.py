@@ -11,6 +11,11 @@ for pandas processing.
 
 import xml.parsers.expat
 import sys
+from bs4 import BeautifulSoup
+import nltk
+nltk.download('punkt')
+import re
+#import wikitextparser as wtp
 
 __version__ = '2.0.1'
 
@@ -28,7 +33,18 @@ def xml_to_csv(filename):
   output_csv = None
   _parent = None
   _current_tag = ''
-  page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = ''
+  page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = factoids = ''
+  def modify(data):
+      #soup = nltk.word_tokenize(data)
+      #values = ','.join(map(str, soup))
+      #soup = BeautifulSoup(data, "xml")
+      #soup = soup.get_text()
+      #return soup
+
+      #values = wtp.parse(data)
+      #values = ','.join(map(str, values))
+      #values = re.sub('=', '', data)
+      return data
 
   def start_tag(tag, attrs):
     nonlocal output_csv, _current_tag, _parent
@@ -41,6 +57,7 @@ def xml_to_csv(filename):
         bytes_var = attrs['bytes']
       else: # There's a 'deleted' flag or no info about bytes of the edition
         bytes_var = '-1'
+      _parent = tag
     elif tag == 'page' or tag == 'revision' or tag == 'contributor':
       _parent = tag
 
@@ -49,7 +66,7 @@ def xml_to_csv(filename):
 
   def data_handler(data):
     nonlocal output_csv, _current_tag, _parent
-    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name
+    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,factoids
 
     if _current_tag == '': # Don't process blank "orphan" data between tags!!
       return
@@ -77,10 +94,12 @@ def xml_to_csv(filename):
         elif _current_tag == 'ip':
           contributor_id = data
           contributor_name = 'Anonymous'
+      elif _parent == 'text':
+          factoids = modify(data)
 
   def end_tag(tag):
     nonlocal output_csv, _current_tag, _parent
-    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var
+    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var,factoids
 
 
     def has_empty_field(l):
@@ -99,6 +118,8 @@ def xml_to_csv(filename):
       _parent = 'page'
     elif tag == 'contributor':
       _parent = 'revision'
+    elif tag == 'text':
+      _parent = 'revision'
 
     # print revision to revision output csv
     if tag == 'revision':
@@ -106,7 +127,7 @@ def xml_to_csv(filename):
       revision_row = [page_id, page_title, page_ns,
                       revision_id, timestamp,
                       contributor_id,contributor_name,
-                      bytes_var]
+                      bytes_var,factoids]
 
       # Do not print (skip) revisions that has any of the fields not available
       if not has_empty_field(revision_row):
@@ -120,7 +141,7 @@ def xml_to_csv(filename):
         print(csv_separator.join(revision_row))
 
       # Clearing data that has to be recalculated for every row:
-      revision_id = timestamp = contributor_id = contributor_name = bytes_var = ''
+      revision_id = timestamp = contributor_id = contributor_name = bytes_var = factoids =  ''
 
     _current_tag = '' # Very important!!! Otherwise blank "orphan" data between tags remain in _current_tag and trigger data_handler!! >:(
 
@@ -130,7 +151,7 @@ def xml_to_csv(filename):
   # Initializing xml parser
   parser = xml.parsers.expat.ParserCreate()
   input_file = open(filename, 'rb')
-
+  print(input_file)
   parser.StartElementHandler = start_tag
   parser.EndElementHandler = end_tag
   parser.CharacterDataHandler = data_handler
@@ -139,7 +160,7 @@ def xml_to_csv(filename):
 
   # writing header for output csv file
   output_csv = open(filename[0:-3]+"csv",'w', encoding='utf8')
-  output_csv.write(csv_separator.join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes"]))
+  output_csv.write(csv_separator.join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes","factoids"]))
   output_csv.write("\n")
 
   # Parsing xml and writting proccesed data to output csv
