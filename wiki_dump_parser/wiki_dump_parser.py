@@ -33,8 +33,8 @@ def xml_to_csv(filename):
   output_csv = None
   _parent = None
   _current_tag = ''
-  page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = factoids = ''
-  def modify(data):
+  page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = edit_content = ''
+  def filter_special_characters(data):
       translation_table = dict.fromkeys(map(ord, '=*\'-“”–'), None)
       data_wtout_crt = data.translate(translation_table)
       return data_wtout_crt
@@ -59,7 +59,7 @@ def xml_to_csv(filename):
 
   def data_handler(data):
     nonlocal output_csv, _current_tag, _parent
-    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,factoids
+    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,edit_content
 
     if _current_tag == '': # Don't process blank "orphan" data between tags!!
       return
@@ -88,11 +88,11 @@ def xml_to_csv(filename):
           contributor_id = data
           contributor_name = 'Anonymous'
       elif _parent == 'text':
-          factoids = modify(data)
+          edit_content = filter_special_characters(data)
 
   def end_tag(tag):
     nonlocal output_csv, _current_tag, _parent
-    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var,factoids
+    nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var,edit_content
 
 
     def has_empty_field(l):
@@ -120,7 +120,7 @@ def xml_to_csv(filename):
       revision_row = [page_id, page_title, page_ns,
                       revision_id, timestamp,
                       contributor_id,contributor_name,
-                      bytes_var,factoids]
+                      bytes_var,edit_content]
 
       # Do not print (skip) revisions that has any of the fields not available
       if not has_empty_field(revision_row):
@@ -134,7 +134,7 @@ def xml_to_csv(filename):
         print(csv_separator.join(revision_row))
 
       # Clearing data that has to be recalculated for every row:
-      revision_id = timestamp = contributor_id = contributor_name = bytes_var = factoids =  ''
+      revision_id = timestamp = contributor_id = contributor_name = bytes_var = edit_content =  ''
 
     _current_tag = '' # Very important!!! Otherwise blank "orphan" data between tags remain in _current_tag and trigger data_handler!! >:(
 
@@ -153,7 +153,7 @@ def xml_to_csv(filename):
 
   # writing header for output csv file
   output_csv = open(filename[0:-3]+"csv",'w', encoding='utf8')
-  output_csv.write(csv_separator.join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes","factoids"]))
+  output_csv.write(csv_separator.join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes","edit_content"]))
   output_csv.write("\n")
 
   # Parsing xml and writting proccesed data to output csv
