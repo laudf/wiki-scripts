@@ -35,9 +35,12 @@ def xml_to_csv(filename):
   _current_tag = ''
   page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = edit_content = ''
   def filter_special_characters(data):
-      translation_table = dict.fromkeys(map(ord, '=*\'-“”–'), None)
+      translation_table = dict.fromkeys(map(ord, '=*\'-“”—#.;,!–'), None)
       data_wtout_crt = data.translate(translation_table)
-      return data_wtout_crt
+      data_wtout_crt = re.sub('<.*>', '', data_wtout_crt, flags=re.MULTILINE)
+      text_lower = data_wtout_crt.lower()
+      text_clean = " ".join(text_lower.split())
+      return text_clean
 
   def start_tag(tag, attrs):
     nonlocal output_csv, _current_tag, _parent
@@ -67,7 +70,7 @@ def xml_to_csv(filename):
     if _parent:
       if _parent == 'page':
         if _current_tag == 'title':
-          page_title = '|' + data + '|'
+          page_title ='|' +  data + '|' 
         elif _current_tag == 'id':
           page_id = data
           if Debug:
@@ -88,7 +91,7 @@ def xml_to_csv(filename):
           contributor_id = data
           contributor_name = 'Anonymous'
       elif _parent == 'text':
-          edit_content = filter_special_characters(data)
+          edit_content = '|' + filter_special_characters(data) + '|'
 
   def end_tag(tag):
     nonlocal output_csv, _current_tag, _parent
