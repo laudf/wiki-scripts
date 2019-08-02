@@ -35,11 +35,11 @@ def xml_to_csv(filename):
   _current_tag = ''
   page_id = page_title = page_ns = revision_id = timestamp = contributor_id = contributor_name = bytes_var = edit_content = ''
   def filter_special_characters(data):
-      translation_table = dict.fromkeys(map(ord, '=*\'-“”—#.;,!–'), None)
+      translation_table = dict.fromkeys(map(ord, '|'), None)
       data_wtout_crt = data.translate(translation_table)
       data_wtout_crt = re.sub('<.*>', '', data_wtout_crt, flags=re.MULTILINE)
-      text_lower = data_wtout_crt.lower()
-      text_clean = " ".join(text_lower.split())
+      #text_lower = data_wtout_crt.lower()
+      text_clean = " ".join(data_wtout_crt.split())
       return text_clean
 
   def start_tag(tag, attrs):
