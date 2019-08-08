@@ -40,7 +40,6 @@ def xml_to_csv(filename):
       translation_table = dict.fromkeys(map(ord, '|'), None)
       data_wtout_crt = data.translate(translation_table)
       data_wtout_crt = re.sub('<.*>', '', data_wtout_crt, flags=re.MULTILINE)
-      #text_lower = data_wtout_crt.lower()
       text_clean = " ".join(data_wtout_crt.split())
       return text_clean
 
@@ -93,8 +92,9 @@ def xml_to_csv(filename):
           contributor_id = data
           contributor_name = 'Anonymous'
       elif _parent == 'text':
-          edit_content = '|' + filter_special_characters(data) + '|'
-          factoids = '|' + generate_factoids(edit_content) + '|'
+          edit_content_aux = filter_special_characters(data)
+          edit_content =  '|' + edit_content_aux + '|' 
+          factoids = '|' + generate_factoids(edit_content_aux) + '|'
 
   def end_tag(tag):
     nonlocal output_csv, _current_tag, _parent
