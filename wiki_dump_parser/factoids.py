@@ -12,7 +12,7 @@ def generate_factoids(edit_content):
     translation_table = dict.fromkeys(map(ord, '[]=*\''), None)
     edit_content = edit_content.translate(translation_table)
     text = str(edit_content)
-    tokens = nltk.word_tokenize(edit_content)
+    tokens = nltk.word_tokenize(text)
     parts_of_speech = nltk.pos_tag(tokens)
     factoids = set([y[0] for y in parts_of_speech if str(y[1]) == 'NNP'])
     factoid_str = ''
